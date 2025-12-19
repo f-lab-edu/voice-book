@@ -16,7 +16,12 @@ public class SignUpServiceImpl implements SignUpService {
 
     @Override
     public String signUp(CreateUserCommand command) {
-        Member member = Member.from(command);
+        Member member = Member.create(
+                command.email(),
+                command.password(),
+                command.nickname(),
+                command.profileImage()
+        );
         Member saveMember = memberRepository.save(member);
         return saveMember.getNickname()+"님 회원가입을 환영합니다!";
     }
