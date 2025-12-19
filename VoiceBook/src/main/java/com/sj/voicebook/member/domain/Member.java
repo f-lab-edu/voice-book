@@ -2,6 +2,7 @@ package com.sj.voicebook.member.domain;
 
 import com.sj.voicebook.global.Role;
 import com.sj.voicebook.global.MemberStatus;
+import com.sj.voicebook.member.dto.application.CreateUserCommand;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -60,6 +61,19 @@ public class Member {
     private LocalDateTime updatedAt;
 
     private LocalDateTime lastLoginAt;
+
+    private Member(CreateUserCommand command) {
+        new MemberBuilder()
+                .email(command.email())
+                .password(command.encryptedPassword())
+                .nickname(command.nickname())
+                .profileImage(command.profileImage())
+                .build();
+    }
+
+    public static Member from(CreateUserCommand command) {
+        return new Member(command);
+    }
 
 
 
