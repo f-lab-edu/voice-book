@@ -6,6 +6,7 @@ import com.sj.voicebook.member.repository.MemberRepository;
 import com.sj.voicebook.member.service.SignUpService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -13,12 +14,14 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class SignUpServiceImpl implements SignUpService {
     private final MemberRepository memberRepository;
+    private final PasswordEncoder passwordEncoder;
+
 
     @Override
     public String signUp(CreateUserCommand command) {
         Member member = Member.create(
                 command.email(),
-                command.password(),
+                passwordEncoder.encode(command.password()),
                 command.nickname(),
                 command.profileImage()
         );
