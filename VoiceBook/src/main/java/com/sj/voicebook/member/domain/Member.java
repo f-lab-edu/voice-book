@@ -62,16 +62,16 @@ public class Member {
 
     private LocalDateTime lastLoginAt;
 
-    private Member(String email, String password, String nickname, String profileImage) {
+    private Member(String email, String encryptedPassword, String nickname, String profileImage) {
         this.email = email;
-        this.password = password;
+        this.password = encryptedPassword;
         this.nickname = nickname;
         this.profileImage = profileImage;
 
     }
 
-    public static Member create(String email, String password, String nickname, String profileImage) {
-        return new Member(email, password, nickname, profileImage);
+    public static Member create(String email, String encryptedPassword, String nickname, String profileImage) {
+        return new Member(email, encryptedPassword, nickname, profileImage);
     }
 
 
