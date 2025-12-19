@@ -4,7 +4,6 @@ import com.sj.voicebook.member.dto.api.CreateUserRequest;
 import com.sj.voicebook.member.dto.application.CreateUserCommand;
 import com.sj.voicebook.member.service.SignUpService;
 import jakarta.validation.Valid;
-import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
