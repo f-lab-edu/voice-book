@@ -13,26 +13,28 @@ import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Builder
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "members", uniqueConstraints = {
-        @UniqueConstraint(name = "unique_email", columnNames = "email")
-})
+@Table(
+        name = "members",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "unique_email", columnNames = "email"),
+                @UniqueConstraint(name = "unique_nickname", columnNames = "nickname")
+        }
+)
 public class Member {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String email;
 
     @Column(length = 100)
     private String password;
 
-    @Column(unique = true, nullable = false, length = 20)
+    @Column(nullable = false, length = 20)
     private String nickname;
 
     private String profileImage;
@@ -43,14 +45,12 @@ public class Member {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    @Builder.Default
     private Role role = Role.ROLE_USER; // ROLE_USER, ROLE_ADMIN
 
     private LocalDateTime deletedAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    @Builder.Default
     private MemberStatus status = MemberStatus.ACTIVE;
 
     @CreatedDate
@@ -62,17 +62,16 @@ public class Member {
 
     private LocalDateTime lastLoginAt;
 
-    private Member(CreateUserCommand command) {
-        new MemberBuilder()
-                .email(command.email())
-                .password(command.encryptedPassword())
-                .nickname(command.nickname())
-                .profileImage(command.profileImage())
-                .build();
+    private Member(String email, String password, String nickname, String profileImage) {
+        this.email = email;
+        this.password = password;
+        this.nickname = nickname;
+        this.profileImage = profileImage;
+
     }
 
-    public static Member from(CreateUserCommand command) {
-        return new Member(command);
+    public static Member create(String email, String password, String nickname, String profileImage) {
+        return new Member(email, password, nickname, profileImage);
     }
 
 
