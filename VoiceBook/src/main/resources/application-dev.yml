@@ -43,15 +43,14 @@ spring:
           ssl:
             enable: true
             trust: smtp.naver.com
-          starttls:
-            enable: false
+          socketFactory:
+            class: javax.net.ssl.SSLSocketFactory
+            port: 465
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
-        transport:
-          protocol: smtp
         debug: true
-      default-encoding: UTF-8
+    default-encoding: UTF-8
 jwt:
   secret: ${JWT_SECRET}
   access-token-expiration: 3600000  # 1시간 (밀리초)
