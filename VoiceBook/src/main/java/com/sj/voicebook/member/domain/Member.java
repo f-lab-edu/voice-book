@@ -2,7 +2,6 @@ package com.sj.voicebook.member.domain;
 
 import com.sj.voicebook.global.Role;
 import com.sj.voicebook.global.MemberStatus;
-import com.sj.voicebook.member.dto.application.CreateUserCommand;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
