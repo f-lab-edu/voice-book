@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
@@ -33,7 +32,7 @@ public class GlobalExceptionHandler {
                         error.getRejectedValue() == null ? "" : error.getRejectedValue().toString(),
                         error.getDefaultMessage()
                 ))
-                .collect(Collectors.toList());
+                .toList();
 
         ErrorResponse response = ErrorResponse.of(
                 ErrorCode.INVALID_INPUT_VALUE.getCode(),
@@ -58,7 +57,7 @@ public class GlobalExceptionHandler {
                         error.getRejectedValue() == null ? "" : error.getRejectedValue().toString(),
                         error.getDefaultMessage()
                 ))
-                .collect(Collectors.toList());
+                .toList();
 
         ErrorResponse response = ErrorResponse.of(
                 ErrorCode.INVALID_INPUT_VALUE.getCode(),

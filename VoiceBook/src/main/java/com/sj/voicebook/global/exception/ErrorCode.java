@@ -21,7 +21,20 @@ public enum ErrorCode {
     // Auth
     INVALID_TOKEN("A001", "유효하지 않은 토큰입니다."),
     EXPIRED_TOKEN("A002", "만료된 토큰입니다."),
-    REFRESH_TOKEN_NOT_FOUND("A003", "리프레시 토큰을 찾을 수 없습니다.");
+    REFRESH_TOKEN_NOT_FOUND("A003", "리프레시 토큰을 찾을 수 없습니다."),
+
+    // Email
+    EMAIL_SEND_FAILED("E001", "이메일 전송에 실패했습니다."),
+    EMAIL_CODE_EXPIRED("E002", "인증 코드가 만료되었습니다."),
+    EMAIL_CODE_MISMATCH("E003", "인증 코드가 일치하지 않습니다."),
+    EMAIL_CODE_NOT_FOUND("E004", "인증 코드를 찾을 수 없습니다."),
+
+    // File
+    INVALID_FILE("F001", "유효하지 않은 파일입니다."),
+    FILE_SIZE_EXCEEDED("F002", "파일 크기가 제한을 초과했습니다."),
+    INVALID_FILE_TYPE("F003", "지원하지 않는 파일 형식입니다."),
+    FILE_UPLOAD_FAILED("F004", "파일 업로드에 실패했습니다."),
+    FILE_URL_GENERATION_FAILED("F005", "파일 URL 생성에 실패했습니다.");
 
     private final String code;
     private final String message;
