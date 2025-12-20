@@ -24,7 +24,11 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/members/signup","/api/members/profile-image").permitAll()
+                        .requestMatchers(
+                                "/api/members/signup",
+                                "/api/members/profile-image",
+                                "/api/members/email/send",
+                                "/api/members/email/verify").permitAll()
                         .anyRequest().authenticated()
                 );
 
