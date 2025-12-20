@@ -73,6 +73,8 @@ public class Member {
         return new Member(email, encryptedPassword, nickname, profileImage);
     }
 
-
+    public void updateLastLoginAt(LocalDateTime lastLoginAt) {
+        this.lastLoginAt = lastLoginAt;
+    }
 
 }
