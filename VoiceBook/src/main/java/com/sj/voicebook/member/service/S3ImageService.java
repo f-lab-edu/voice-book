@@ -16,7 +16,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class S3ImageService {
+public class S3ImageService implements ImageService {
 
     private final S3Template s3Template; // Spring Cloud AWS가 제공하는 편리한 업로더
     private final S3Presigner s3Presigner; // 우리가 만든 URL 발급기
@@ -25,10 +25,11 @@ public class S3ImageService {
     private String bucketName;
 
     // 1. 이미지 업로드 (S3에 저장 후 파일명 반환)
+    @Override
     public String upload(MultipartFile image) {
         // 파일 이름이 겹치지 않게 UUID 사용 (예: uuid_profile.jpg)
         String originalFilename = image.getOriginalFilename();
-        String key = UUID.randomUUID().toString() + "_" + originalFilename;
+        String key = UUID.randomUUID() + "_" + originalFilename;
 
         try (InputStream inputStream = image.getInputStream()) {
             // S3Template을 이용해 아주 간단하게 업로드
@@ -42,7 +43,8 @@ public class S3ImageService {
     }
 
     // 2. 조회용 URL 발급 (파일명 -> 임시 URL 변환)
-    public String getPresignedUrl(String key) {
+    @Override
+    public String getImageUrl(String key) {
         if (key == null) return null;
 
         // "이 버킷의, 이 파일(key)을, GET(조회) 하겠다"는 요청 생성

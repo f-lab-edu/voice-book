@@ -43,7 +43,7 @@ public class MemberController {
 
     @GetMapping("/profile-image")
     public ResponseEntity<ApiResponse<String>> viewImage(@RequestParam("key") String key) {
-        String url = s3ImageService.getPresignedUrl(key);
+        String url = s3ImageService.getImageUrl(key);
         ApiResponse<String> response = ApiResponse.success(url, "프로필 이미지 조회에 성공했습니다.");
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
