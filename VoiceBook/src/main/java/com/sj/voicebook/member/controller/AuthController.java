@@ -17,7 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 @Slf4j
 @RequestMapping("/api/members")
-public class MemberController {
+public class AuthController {
     private final SignUpService signUpService;
     private final ImageService imageService;
 
@@ -41,12 +41,7 @@ public class MemberController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @GetMapping("/profile-image")
-    public ResponseEntity<ApiResponse<String>> viewImage(@RequestParam("key") String key) {
-        String url = imageService.getImageUrl(key);
-        ApiResponse<String> response = ApiResponse.success(url, "프로필 이미지 조회에 성공했습니다.");
-        return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
+
 
 
 }
