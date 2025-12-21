@@ -9,12 +9,15 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 @RequiredArgsConstructor
 @Service
@@ -24,6 +27,9 @@ public class JavaEmailService implements EmailService {
     private final RedisUtil redisUtil;
     private final MemberRepository memberRepository;
 
+    @Qualifier("emailExecutor")
+    private final Executor emailExecutor;
+
     private static final String EMAIL_AUTH_PREFIX = "email:auth:";
     private static final long EXPIRE_MINUTES = 5;
     private static final int CODE_LENGTH = 6;
@@ -32,44 +38,51 @@ public class JavaEmailService implements EmailService {
     @Value("${spring.mail.username}") // application.yml의 username 가져오기
     private String senderEmail;
 
-    @Override
-    public void sendEmail(String toEmail) {
 
-        // 이미 가입된 이메일인지 확인
-        if(memberRepository.existsByEmail(toEmail)) {
-            log.warn("이미 가입된 이메일로 인증 코드 전송 시도: {}", toEmail);
-            throw new BusinessException(ErrorCode.EMAIL_DUPLICATION);
-        }
+        @Override
+        public void sendEmail(String toEmail) {
+            if(memberRepository.existsByEmail(toEmail)) {
+                log.warn("이미 가입된 이메일로 인증 코드 전송 시도: {}", toEmail);
+                throw new BusinessException(ErrorCode.EMAIL_DUPLICATION);
+            }
 
-        String redisKey = EMAIL_AUTH_PREFIX + toEmail;
+            String redisKey = EMAIL_AUTH_PREFIX + toEmail;
 
-        // 기존 인증 코드가 있다면 삭제 (재요청 시)
-        if (redisUtil.getData(redisKey) != null) {
-            redisUtil.deleteData(redisKey);
-            log.info("기존 인증 코드 삭제: {}", toEmail);
-        }
+            if (redisUtil.getData(redisKey) != null) {
+                redisUtil.deleteData(redisKey);
+                log.info("기존 인증 코드 삭제: {}", toEmail);
+            }
 
-        String authCode = createCode();
+            String authCode = createCode();
 
-        try {
-            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
-
-            helper.setTo(toEmail);
-            helper.setFrom(senderEmail);
-            helper.setSubject("[말로쓴책] 이메일 인증 코드입니다.");
-            helper.setText(buildEmailContent(authCode), true);
-
-            javaMailSender.send(mimeMessage);
-            log.info("인증 코드 전송 성공: {}", toEmail);
-
-            // Redis에 저장 (Key: email:auth:{이메일}, Value: 인증번호, 유효시간: 5분)
+            // Redis에 먼저 저장
             redisUtil.setDataExpire(redisKey, authCode, EXPIRE_MINUTES);
-        } catch (MessagingException e) {
-            log.error("이메일 전송 실패: {}", toEmail, e);
-            throw new BusinessException(ErrorCode.EMAIL_SEND_FAILED);
+
+            // CompletableFuture로 비동기 이메일 전송
+            CompletableFuture.runAsync(() -> {
+                try {
+                    MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+                    MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
+
+                    helper.setTo(toEmail);
+                    helper.setFrom(senderEmail);
+                    helper.setSubject("[말로쓴책] 이메일 인증 코드입니다.");
+                    helper.setText(buildEmailContent(authCode), true);
+
+                    javaMailSender.send(mimeMessage);
+                    log.info("인증 코드 전송 성공: {}", toEmail);
+                } catch (MessagingException e) {
+                    log.error("이메일 전송 실패: {}", toEmail, e);
+                    // 필요시 재시도 로직 추가 가능
+                }
+            }, emailExecutor).exceptionally(ex -> {
+                log.error("비동기 이메일 전송 예외: {}", toEmail, ex);
+                return null;
+            });
         }
-    }
+
+        // verifyEmailCode, createCode, buildEmailContent 메서드는 동일
+
 
     @Override
     public void verifyEmailCode(String email, String code) {
