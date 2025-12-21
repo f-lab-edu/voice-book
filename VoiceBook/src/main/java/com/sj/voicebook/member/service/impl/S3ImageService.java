@@ -1,5 +1,6 @@
-package com.sj.voicebook.member.service;
+package com.sj.voicebook.member.service.impl;
 
+import com.sj.voicebook.member.service.ImageService;
 import io.awspring.cloud.s3.S3Template;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

@@ -7,7 +7,7 @@ import com.sj.voicebook.member.dto.api.LoginResponse;
 import com.sj.voicebook.member.dto.api.RefreshTokenRequest;
 import com.sj.voicebook.member.dto.api.RefreshTokenResponse;
 import com.sj.voicebook.member.dto.application.CreateUserCommand;
-import com.sj.voicebook.member.service.AuthService;
+import com.sj.voicebook.member.service.impl.AuthService;
 import com.sj.voicebook.member.service.ImageService;
 import com.sj.voicebook.member.service.SignUpService;
 import jakarta.validation.Valid;

@@ -1,4 +1,4 @@
-package com.sj.voicebook.member.service;
+package com.sj.voicebook.member.service.impl;
 
 import com.sj.voicebook.global.exception.BusinessException;
 import com.sj.voicebook.global.exception.ErrorCode;
