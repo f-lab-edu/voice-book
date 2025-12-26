@@ -31,7 +31,7 @@ public class EmailDuplicationValidator {
      */
     public boolean checkExists(String email) {
         if (!StringUtils.hasText(email)) {
-            return false; // 혹은 예외 처리, 정책에 따라 다름
+            throw new BusinessException(ErrorCode.NOT_OR_NULL_INPUT_REQUIRED);
         }
         return memberRepository.existsByEmail(email);
     }
