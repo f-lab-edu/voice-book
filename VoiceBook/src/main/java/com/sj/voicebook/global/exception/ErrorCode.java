@@ -37,7 +37,7 @@ public enum ErrorCode {
     FILE_URL_GENERATION_FAILED("F005", "파일 URL 생성에 실패했습니다."),
 
     //IO
-    NOT_OR_NULL_FILE_REQUIRED("I001", "입력값이 없거나 null일 수 없습니다.");
+    NOT_OR_NULL_INPUT_REQUIRED("I001", "입력값이 없거나 null일 수 없습니다.");
 
     private final String code;
     private final String message;
