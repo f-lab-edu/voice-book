@@ -9,7 +9,7 @@ import org.springframework.util.StringUtils;
 
 @Component
 @RequiredArgsConstructor
-public class NicknameDuplicatationValidtor {
+public class NicknameDuplicationValidator {
     private final MemberRepository memberRepository;
 
     public boolean isNicknameDuplicated(String nickname) {
