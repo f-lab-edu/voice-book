@@ -1,10 +1,9 @@
 package com.sj.voicebook.member.service.impl;
 
-import com.sj.voicebook.global.exception.BusinessException;
-import com.sj.voicebook.global.exception.ErrorCode;
 import com.sj.voicebook.member.domain.Member;
-import com.sj.voicebook.member.dto.application.CreateUserCommand;
+import com.sj.voicebook.member.dto.application.SignUpCommand;
 import com.sj.voicebook.member.repository.MemberRepository;
+import com.sj.voicebook.member.service.ImageService;
 import com.sj.voicebook.member.service.validator.EmailDuplicationValidator;
 import com.sj.voicebook.member.service.SignUpService;
 import com.sj.voicebook.member.service.validator.NicknameDuplicationValidator;
@@ -22,21 +21,28 @@ public class SignUpServiceImpl implements SignUpService {
     private final PasswordEncoder passwordEncoder;
     private final EmailDuplicationValidator emailDuplicationValidator;
     private final NicknameDuplicationValidator nicknameDuplicationValidator;
+    private final ImageService imageService;
 
     @Override
     @Transactional
-    public Long signUp(CreateUserCommand command) {
+    public Long signUp(SignUpCommand command) {
         // 이메일 중복 검사
         emailDuplicationValidator.validate(command.email());
 
         // 닉네임 중복 검사
         nicknameDuplicationValidator.validate(command.nickname());
 
+        String imageUrl = null;
+
+        if (command.profileImage() != null && !command.profileImage().isEmpty()) {
+            imageUrl = imageService.upload(command.profileImage());
+        }
+
         Member member = Member.create(
                 command.email(),
                 passwordEncoder.encode(command.password()),
                 command.nickname(),
-                command.profileImage()
+                imageUrl
         );
         Member saveMember = memberRepository.save(member);
         return saveMember.getUserId();
