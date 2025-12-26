@@ -34,7 +34,10 @@ public enum ErrorCode {
     FILE_SIZE_EXCEEDED("F002", "파일 크기가 제한을 초과했습니다."),
     INVALID_FILE_TYPE("F003", "지원하지 않는 파일 형식입니다."),
     FILE_UPLOAD_FAILED("F004", "파일 업로드에 실패했습니다."),
-    FILE_URL_GENERATION_FAILED("F005", "파일 URL 생성에 실패했습니다.");
+    FILE_URL_GENERATION_FAILED("F005", "파일 URL 생성에 실패했습니다."),
+
+    //IO
+    NOT_OR_NULL_FILE_REQUIRED("I001", "입력값이 없거나 null일 수 없습니다.");
 
     private final String code;
     private final String message;

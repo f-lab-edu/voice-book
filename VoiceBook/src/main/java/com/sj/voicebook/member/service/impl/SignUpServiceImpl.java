@@ -5,6 +5,7 @@ import com.sj.voicebook.global.exception.ErrorCode;
 import com.sj.voicebook.member.domain.Member;
 import com.sj.voicebook.member.dto.application.CreateUserCommand;
 import com.sj.voicebook.member.repository.MemberRepository;
+import com.sj.voicebook.member.service.EmailDuplicationValidator;
 import com.sj.voicebook.member.service.SignUpService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,12 +19,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class SignUpServiceImpl implements SignUpService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
-
+    private final EmailDuplicationValidator emailDuplicationValidator;
     @Override
     @Transactional
     public String signUp(CreateUserCommand command) {
         // 이메일 중복 검사
-        if (checkEmailDuplication(command.email())) {
+        if (emailDuplicationValidator.isEmailDuplicated(command.email())) {
             throw new BusinessException(ErrorCode.EMAIL_DUPLICATION);
         }
 
@@ -45,7 +46,7 @@ public class SignUpServiceImpl implements SignUpService {
     @Override
     @Transactional(readOnly = true)
     public Boolean checkEmailDuplication(String email) {
-        return memberRepository.existsByEmail(email);
+        return emailDuplicationValidator.isEmailDuplicated(email);
     }
 
     @Override
