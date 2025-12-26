@@ -25,16 +25,12 @@ public class SignUpServiceImpl implements SignUpService {
 
     @Override
     @Transactional
-    public String signUp(CreateUserCommand command) {
+    public Long signUp(CreateUserCommand command) {
         // 이메일 중복 검사
-        if (emailDuplicationValidator.isEmailDuplicated(command.email())) {
-            throw new BusinessException(ErrorCode.EMAIL_DUPLICATION);
-        }
+        emailDuplicationValidator.isEmailDuplicated(command.email());
 
         // 닉네임 중복 검사
-        if (nicknameDuplicationValidator.isNicknameDuplicated(command.nickname())) {
-            throw new BusinessException(ErrorCode.NICKNAME_DUPLICATION);
-        }
+        nicknameDuplicationValidator.isNicknameDuplicated(command.nickname());
 
         Member member = Member.create(
                 command.email(),
@@ -43,7 +39,7 @@ public class SignUpServiceImpl implements SignUpService {
                 command.profileImage()
         );
         Member saveMember = memberRepository.save(member);
-        return saveMember.getNickname() + "님 회원가입을 환영합니다!";
+        return saveMember.getUserId();
     }
 
     @Override
