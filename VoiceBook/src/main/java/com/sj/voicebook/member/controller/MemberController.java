@@ -2,7 +2,6 @@ package com.sj.voicebook.member.controller;
 
 import com.sj.voicebook.global.ApiResponse;
 import com.sj.voicebook.member.dto.api.SignUpRequest;
-import com.sj.voicebook.member.dto.application.SignUpCommand;
 import com.sj.voicebook.member.service.SignUpService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,13 +21,8 @@ public class MemberController {
     public ResponseEntity<ApiResponse<Long>> signUp(
             @Valid @ModelAttribute SignUpRequest request) {
 
-        SignUpCommand command = SignUpCommand.builder()
-                .email(request.email())
-                .nickname(request.nickname())
-                .password(request.password())
-                .profileImage(request.profileImage()).build();
 
-        long userId = signUpService.signUp(command);
+        long userId = signUpService.signUp(request.toCommand());
         ApiResponse<Long> response = ApiResponse.success(userId, "회원가입이 완료되었습니다.");
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
