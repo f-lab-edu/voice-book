@@ -4,12 +4,13 @@ import com.sj.voicebook.global.exception.BusinessException;
 import com.sj.voicebook.global.exception.ErrorCode;
 import com.sj.voicebook.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 @RequiredArgsConstructor
-@Service
+@Component
 public class EmailDuplicationValidator {
     private final MemberRepository memberRepository;
 
