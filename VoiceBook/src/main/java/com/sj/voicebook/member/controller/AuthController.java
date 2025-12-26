@@ -1,23 +1,19 @@
 package com.sj.voicebook.member.controller;
 
 import com.sj.voicebook.global.ApiResponse;
-import com.sj.voicebook.member.dto.api.CreateUserRequest;
 import com.sj.voicebook.member.dto.api.LoginRequest;
 import com.sj.voicebook.member.dto.api.LoginResponse;
 import com.sj.voicebook.member.dto.api.RefreshTokenRequest;
 import com.sj.voicebook.member.dto.api.RefreshTokenResponse;
-import com.sj.voicebook.member.dto.application.CreateUserCommand;
 import com.sj.voicebook.member.service.impl.AuthService;
 import com.sj.voicebook.member.service.ImageService;
 import com.sj.voicebook.member.service.SignUpService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,26 +23,6 @@ public class AuthController {
     private final SignUpService signUpService;
     private final ImageService imageService;
     private final AuthService authService;
-
-    @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<Long>> signUp(
-            @Valid @ModelAttribute CreateUserRequest request,
-            @RequestParam(value = "profileImage", required = false) MultipartFile profileImage) {
-
-        String key = imageService.upload(profileImage);
-
-        CreateUserCommand command = CreateUserCommand.builder()
-                .email(request.email())
-                .nickname(request.nickname())
-                .password(request.password())
-                .profileImage(key)
-                .build();
-
-        long userId = signUpService.signUp(command);
-        ApiResponse<Long> response = ApiResponse.success(userId, "회원가입이 완료되었습니다.");
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
 
     /**
      * 로그인
