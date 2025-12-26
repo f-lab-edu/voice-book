@@ -18,6 +18,10 @@ public class EmailDuplicationValidator {
         if(!StringUtils.hasText(email)){
             throw new BusinessException(ErrorCode.NOT_OR_NULL_INPUT_REQUIRED);
         }
+
+        if(memberRepository.existsByEmail(email)){
+            throw new BusinessException(ErrorCode.EMAIL_DUPLICATION);
+        }
         return memberRepository.existsByEmail(email);
     }
 }

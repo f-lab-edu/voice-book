@@ -16,6 +16,9 @@ public class NicknameDuplicationValidator {
         if(!StringUtils.hasText(nickname)){
             throw new BusinessException(ErrorCode.NOT_OR_NULL_INPUT_REQUIRED);
         }
+        if(memberRepository.existsByNickname(nickname)){
+            throw new BusinessException(ErrorCode.NICKNAME_DUPLICATION);
+        }
         return memberRepository.existsByNickname(nickname);
     }
 
