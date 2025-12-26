@@ -20,8 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RequestMapping("/api/members")
 public class AuthController {
-    private final SignUpService signUpService;
-    private final ImageService imageService;
+
     private final AuthService authService;
 
     /**
