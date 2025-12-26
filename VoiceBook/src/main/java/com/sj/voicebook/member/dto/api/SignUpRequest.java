@@ -1,6 +1,7 @@
 package com.sj.voicebook.member.dto.api;
 
 import jakarta.validation.constraints.*;
+import org.springframework.web.multipart.MultipartFile;
 
 public record SignUpRequest(
         @NotBlank(message = "이메일은 필수입니다")
@@ -17,7 +18,6 @@ public record SignUpRequest(
 
         @NotBlank(message = "닉네임은 필수입니다")
         @Size(min = 2, max = 20, message = "닉네임은 2~20자여야 합니다")
-        String nickname
-
-) {
+        String nickname,
+        MultipartFile profileImage) {
 }
