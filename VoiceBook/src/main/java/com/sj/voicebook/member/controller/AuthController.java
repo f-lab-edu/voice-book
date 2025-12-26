@@ -29,7 +29,7 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<String>> signUp(
+    public ResponseEntity<ApiResponse<Long>> signUp(
             @Valid @ModelAttribute CreateUserRequest request,
             @RequestParam(value = "profileImage", required = false) MultipartFile profileImage) {
 
@@ -42,8 +42,8 @@ public class AuthController {
                 .profileImage(key)
                 .build();
 
-        String result = signUpService.signUp(command);
-        ApiResponse<String> response = ApiResponse.success(result, "회원가입이 완료되었습니다.");
+        long userId = signUpService.signUp(command);
+        ApiResponse<Long> response = ApiResponse.success(userId, "회원가입이 완료되었습니다.");
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
