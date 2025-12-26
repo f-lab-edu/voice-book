@@ -27,10 +27,10 @@ public class SignUpServiceImpl implements SignUpService {
     @Transactional
     public Long signUp(CreateUserCommand command) {
         // 이메일 중복 검사
-        emailDuplicationValidator.isEmailDuplicated(command.email());
+        emailDuplicationValidator.validate(command.email());
 
         // 닉네임 중복 검사
-        nicknameDuplicationValidator.isNicknameDuplicated(command.nickname());
+        nicknameDuplicationValidator.validate(command.nickname());
 
         Member member = Member.create(
                 command.email(),
@@ -45,12 +45,12 @@ public class SignUpServiceImpl implements SignUpService {
     @Override
     @Transactional(readOnly = true)
     public Boolean checkEmailDuplication(String email) {
-        return emailDuplicationValidator.isEmailDuplicated(email);
+        return emailDuplicationValidator.checkExists(email);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Boolean checkNicknameDuplication(String nickname) {
-        return nicknameDuplicationValidator.isNicknameDuplicated(nickname);
+        return nicknameDuplicationValidator.checkExists(nickname);
     }
 }

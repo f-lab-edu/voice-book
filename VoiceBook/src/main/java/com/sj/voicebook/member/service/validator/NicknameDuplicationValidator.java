@@ -12,14 +12,19 @@ import org.springframework.util.StringUtils;
 public class NicknameDuplicationValidator {
     private final MemberRepository memberRepository;
 
-    public boolean isNicknameDuplicated(String nickname) {
-        if(!StringUtils.hasText(nickname)){
+    public void validate(String nickname) {
+        if (!StringUtils.hasText(nickname)) {
             throw new BusinessException(ErrorCode.NOT_OR_NULL_INPUT_REQUIRED);
         }
-        if(memberRepository.existsByNickname(nickname)){
+        if (memberRepository.existsByNickname(nickname)) {
             throw new BusinessException(ErrorCode.NICKNAME_DUPLICATION);
+        }
+    }
+
+    public boolean checkExists(String nickname) {
+        if (!StringUtils.hasText(nickname)) {
+            throw new BusinessException(ErrorCode.NOT_OR_NULL_INPUT_REQUIRED);
         }
         return memberRepository.existsByNickname(nickname);
     }
-
 }
