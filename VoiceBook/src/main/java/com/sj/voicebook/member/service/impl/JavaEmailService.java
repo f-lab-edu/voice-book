@@ -1,15 +1,16 @@
 package com.sj.voicebook.member.service.impl;
 
+import com.sj.voicebook.global.RedisPrefix;
 import com.sj.voicebook.global.exception.BusinessException;
 import com.sj.voicebook.global.exception.ErrorCode;
 import com.sj.voicebook.global.util.RedisUtil;
-import com.sj.voicebook.member.repository.MemberRepository;
 import com.sj.voicebook.member.service.EmailService;
 import com.sj.voicebook.member.service.provider.EmailTemplateProvider;
 import com.sj.voicebook.member.service.validator.EmailDuplicationValidator;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -19,6 +20,8 @@ import org.springframework.stereotype.Service;
 import java.security.SecureRandom;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+
+
 
 @Service
 @Slf4j
@@ -31,19 +34,16 @@ public class JavaEmailService implements EmailService {
 
     private final Executor emailExecutor;
 
-    private static final String EMAIL_AUTH_PREFIX = "email:auth:";
     private static final long EXPIRE_MINUTES = 5;
-    private static final String EMAIL_RATE_LIMIT_PREFIX = "email:rate:";
     private static final long RATE_LIMIT_SECONDS = 60;
     private static final int CODE_LENGTH = 6;
-    private static final String EMAIL_ATTEMPT_PREFIX = "email:attempt:";
     private static final int MAX_ATTEMPTS = 5;
-    private static final String EMAIL_VERIFIED_PREFIX = "email:verified:";
     private static final long VERIFIED_EXPIRE_MINUTES = 30;
 
     @Value("${spring.mail.username}") // application.yml의 username 가져오기
     private String senderEmail;
 
+    @Autowired
     public JavaEmailService(JavaMailSender javaMailSender,
                             RedisUtil redisUtil,
                             EmailTemplateProvider emailTemplateProvider, EmailDuplicationValidator emailDuplicationValidator,
@@ -64,10 +64,10 @@ public class JavaEmailService implements EmailService {
         // 발송 빈도 제한 검사
         checkRateLimit(toEmail);
         // Rate limit 키 생성
-        String rateLimitKey = EMAIL_RATE_LIMIT_PREFIX + toEmail;
+        String rateLimitKey = RedisPrefix.EMAIL_RATE_LIMIT_PREFIX + toEmail;
 
         // Redis에 저장할 키 생성
-        String redisKey = EMAIL_AUTH_PREFIX + toEmail;
+        String redisKey = RedisPrefix.EMAIL_AUTH_PREFIX + toEmail;
 
         // 기존 인증 코드가 있으면 삭제
         redisUtil.deleteData(redisKey);
@@ -84,7 +84,7 @@ public class JavaEmailService implements EmailService {
     }
 
     private void checkRateLimit(String email) {
-        String rateLimitKey = EMAIL_RATE_LIMIT_PREFIX + email;
+        String rateLimitKey = RedisPrefix.EMAIL_RATE_LIMIT_PREFIX + email;
         if (redisUtil.getData(rateLimitKey) != null) {
             throw new BusinessException(ErrorCode.EMAIL_SEND_TOO_FREQUENT);
         }
@@ -129,9 +129,9 @@ public class JavaEmailService implements EmailService {
     @Override
     public void verifyEmailCode(String email, String code) {
         // 시도 횟수 확인
-        String attemptKey = EMAIL_ATTEMPT_PREFIX + email;
+        String attemptKey = RedisPrefix.EMAIL_ATTEMPT_PREFIX + email;
         String attempts = redisUtil.getData(attemptKey);
-        String redisKey = EMAIL_AUTH_PREFIX + email;
+        String redisKey = RedisPrefix.EMAIL_AUTH_PREFIX + email;
 
         if (attempts != null && Integer.parseInt(attempts) >= MAX_ATTEMPTS) {
             redisUtil.deleteData(redisKey);
@@ -155,14 +155,14 @@ public class JavaEmailService implements EmailService {
         // 인증 성공 시 Redis에서 인증 코드 및 시도 횟수 삭제
         redisUtil.deleteData(redisKey);
         redisUtil.deleteData(attemptKey);
-        redisUtil.deleteData(EMAIL_RATE_LIMIT_PREFIX + email);
+        redisUtil.deleteData(RedisPrefix.EMAIL_RATE_LIMIT_PREFIX + email);
 
-        redisUtil.setDataExpire(EMAIL_VERIFIED_PREFIX+email, "true", VERIFIED_EXPIRE_MINUTES);
+        redisUtil.setDataExpire(RedisPrefix.EMAIL_VERIFIED_PREFIX+email, "true", VERIFIED_EXPIRE_MINUTES);
     }
 
     @Override
     public boolean isEmailVerified(String email) {
-        return redisUtil.getData(EMAIL_VERIFIED_PREFIX+email)!=null;
+        return redisUtil.getData(RedisPrefix.EMAIL_VERIFIED_PREFIX+email)!=null;
     }
 
     /**
