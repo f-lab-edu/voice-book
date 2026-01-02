@@ -6,6 +6,7 @@ import com.sj.voicebook.global.util.RedisUtil;
 import com.sj.voicebook.member.repository.MemberRepository;
 import com.sj.voicebook.member.service.EmailService;
 import com.sj.voicebook.member.service.provider.EmailTemplateProvider;
+import com.sj.voicebook.member.service.validator.EmailDuplicationValidator;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
@@ -24,9 +25,8 @@ import java.util.concurrent.Executor;
 public class JavaEmailService implements EmailService {
     private final JavaMailSender javaMailSender;
     private final RedisUtil redisUtil;
-    private final MemberRepository memberRepository;
     private final EmailTemplateProvider emailTemplateProvider;
-
+    private final EmailDuplicationValidator emailDuplicationValidator;
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final Executor emailExecutor;
@@ -46,22 +46,21 @@ public class JavaEmailService implements EmailService {
 
     public JavaEmailService(JavaMailSender javaMailSender,
                             RedisUtil redisUtil,
-                            MemberRepository memberRepository, EmailTemplateProvider emailTemplateProvider,
+                            MemberRepository memberRepository, EmailTemplateProvider emailTemplateProvider, EmailDuplicationValidator emailDuplicationValidator,
                             @Qualifier("emailExecutor")
     Executor emailExecutor) {
         this.javaMailSender = javaMailSender;
         this.redisUtil = redisUtil;
         this.memberRepository = memberRepository;
         this.emailTemplateProvider = emailTemplateProvider;
+        this.emailDuplicationValidator = emailDuplicationValidator;
         this.emailExecutor = emailExecutor;
     }
 
 
     @Override
         public void sendEmail(String toEmail) {
-        if(memberRepository.existsByEmail(toEmail)) {
-            throw new BusinessException(ErrorCode.EMAIL_DUPLICATION);
-        }
+        emailDuplicationValidator.validate(toEmail);
 
         String rateLimitKey = EMAIL_RATE_LIMIT_PREFIX + toEmail;
 
@@ -107,6 +106,7 @@ public class JavaEmailService implements EmailService {
             return null;
         });
     }
+
 
 
 
