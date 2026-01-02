@@ -79,7 +79,6 @@ public class AuthService {
     /**
      * 토큰 재발급 - 필요한 정보만 조회하여 토큰 생성
      */
-    @Transactional
     public RefreshTokenResponse refresh(String refreshToken) {
         // RefreshToken 유효성 검증
         if (!jwtTokenProvider.validateToken(refreshToken)) {
