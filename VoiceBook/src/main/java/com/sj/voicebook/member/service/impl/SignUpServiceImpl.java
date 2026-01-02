@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 @Slf4j
 public class SignUpServiceImpl implements SignUpService {
     private final MemberRepository memberRepository;
@@ -51,13 +52,11 @@ public class SignUpServiceImpl implements SignUpService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Boolean checkEmailDuplication(String email) {
         return emailDuplicationValidator.checkExists(email);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Boolean checkNicknameDuplication(String nickname) {
         return nicknameDuplicationValidator.checkExists(nickname);
     }
