@@ -121,7 +121,6 @@ public class AuthService {
                 refreshTokenExpirationMinutes
         );
 
-        log.info("Token refreshed for user: {}", memberTokenInfo.email());
 
         return new RefreshTokenResponse(newAccessToken, newRefreshToken);
     }
@@ -132,7 +131,6 @@ public class AuthService {
     @Transactional
     public void logout(Long userId) {
         redisUtil.deleteData(REFRESH_TOKEN_PREFIX + userId);
-        log.info("User logged out: {}", userId);
     }
 }
 
