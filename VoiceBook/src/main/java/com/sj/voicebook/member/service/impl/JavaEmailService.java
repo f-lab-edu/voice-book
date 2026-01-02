@@ -8,7 +8,6 @@ import com.sj.voicebook.member.service.EmailService;
 import com.sj.voicebook.member.service.provider.EmailTemplateProvider;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,7 +15,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
-import java.util.Random;
+import java.security.SecureRandom;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
@@ -28,6 +27,8 @@ public class JavaEmailService implements EmailService {
     private final MemberRepository memberRepository;
     private final EmailTemplateProvider emailTemplateProvider;
 
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
     private final Executor emailExecutor;
 
     private static final String EMAIL_AUTH_PREFIX = "email:auth:";
@@ -37,6 +38,8 @@ public class JavaEmailService implements EmailService {
     private static final int CODE_LENGTH = 6;
     private static final String EMAIL_ATTEMPT_PREFIX = "email:attempt:";
     private static final int MAX_ATTEMPTS = 5;
+    private static final String EMAIL_VERIFIED_PREFIX = "email:verified:";
+    private static final long VERIFIED_EXPIRE_MINUTES = 30;
 
     @Value("${spring.mail.username}") // application.yml의 username 가져오기
     private String senderEmail;
@@ -95,9 +98,12 @@ public class JavaEmailService implements EmailService {
                 } catch (MessagingException e) {
                     log.error("이메일 전송 실패: {}", toEmail, e);
                     redisUtil.deleteData(redisKey);
+                    redisUtil.deleteData(rateLimitKey);
                 }
             }, emailExecutor).exceptionally(ex -> {
                 log.error("비동기 이메일 전송 중 예외 발생: {}", toEmail, ex);
+                redisUtil.deleteData(redisKey);
+                redisUtil.deleteData(rateLimitKey);
                 return null;
             });
         }
@@ -134,14 +140,20 @@ public class JavaEmailService implements EmailService {
         // 인증 성공 시 Redis에서 인증 코드 및 시도 횟수 삭제
         redisUtil.deleteData(redisKey);
         redisUtil.deleteData(attemptKey);
+
+        redisUtil.setDataExpire(EMAIL_VERIFIED_PREFIX+email, "true", VERIFIED_EXPIRE_MINUTES);
+    }
+
+    @Override
+    public boolean isEmailVerified(String email) {
+        return redisUtil.getData(EMAIL_VERIFIED_PREFIX+email)!=null;
     }
 
     /**
      * 6자리 랜덤 숫자 인증 코드 생성
      */
     private String createCode() {
-        Random random = new Random();
-        return String.format("%0" + CODE_LENGTH + "d", random.nextInt((int) Math.pow(10, CODE_LENGTH)));
+        return String.format("%0" + CODE_LENGTH + "d", SECURE_RANDOM.nextInt((int) Math.pow(10, CODE_LENGTH)));
     }
 
 
