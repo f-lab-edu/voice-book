@@ -17,6 +17,7 @@ public enum ErrorCode {
     MEMBER_NOT_FOUND("M003", "회원을 찾을 수 없습니다."),
     INVALID_PASSWORD("M004", "비밀번호가 일치하지 않습니다."),
     UNAUTHORIZED_MEMBER("M005", "인증되지 않은 회원입니다."),
+    EMAIL_NOT_VERIFIED("M006", "이메일 인증이 완료되지 않았습니다."),
 
     // Auth
     INVALID_TOKEN("A001", "유효하지 않은 토큰입니다."),
