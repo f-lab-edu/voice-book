@@ -17,6 +17,7 @@ public enum ErrorCode {
     MEMBER_NOT_FOUND("M003", "회원을 찾을 수 없습니다."),
     INVALID_PASSWORD("M004", "비밀번호가 일치하지 않습니다."),
     UNAUTHORIZED_MEMBER("M005", "인증되지 않은 회원입니다."),
+    EMAIL_NOT_VERIFIED("M006", "이메일 인증이 완료되지 않았습니다."),
 
     // Auth
     INVALID_TOKEN("A001", "유효하지 않은 토큰입니다."),
@@ -28,13 +29,21 @@ public enum ErrorCode {
     EMAIL_CODE_EXPIRED("E002", "인증 코드가 만료되었습니다."),
     EMAIL_CODE_MISMATCH("E003", "인증 코드가 일치하지 않습니다."),
     EMAIL_CODE_NOT_FOUND("E004", "인증 코드를 찾을 수 없습니다."),
+    EMAIL_SEND_TOO_FREQUENT("E005", "이메일 재전송은 60초 후에 가능합니다."),
+    EMAIL_VERIFY_BLOCKED("E006", "인증 시도 횟수를 초과했습니다."),
 
     // File
     INVALID_FILE("F001", "유효하지 않은 파일입니다."),
     FILE_SIZE_EXCEEDED("F002", "파일 크기가 제한을 초과했습니다."),
     INVALID_FILE_TYPE("F003", "지원하지 않는 파일 형식입니다."),
     FILE_UPLOAD_FAILED("F004", "파일 업로드에 실패했습니다."),
-    FILE_URL_GENERATION_FAILED("F005", "파일 URL 생성에 실패했습니다.");
+    FILE_URL_GENERATION_FAILED("F005", "파일 URL 생성에 실패했습니다."),
+
+    // Image
+    IMAGE_UPLOAD_ERROR("I001", "이미지 업로드 중 오류가 발생했습니다."),
+
+    //IO
+    NOT_OR_NULL_INPUT_REQUIRED("I001", "입력값이 없거나 null일 수 없습니다.");
 
     private final String code;
     private final String message;

@@ -7,7 +7,6 @@ import com.sj.voicebook.global.util.RedisUtil;
 import com.sj.voicebook.member.domain.Member;
 import com.sj.voicebook.member.dto.api.LoginResponse;
 import com.sj.voicebook.member.dto.api.RefreshTokenResponse;
-import com.sj.voicebook.member.dto.application.MemberAuthInfo;
 import com.sj.voicebook.member.dto.application.MemberTokenInfo;
 import com.sj.voicebook.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -37,52 +36,48 @@ public class AuthService {
     @Transactional
     public LoginResponse login(String email, String password) {
         // 로그인에 필요한 정보만 조회
-        MemberAuthInfo memberAuthInfo = memberRepository.findAuthInfoByEmail(email)
+        Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
         // 비밀번호 검증
-        if (!passwordEncoder.matches(password, memberAuthInfo.password())) {
+        if (!passwordEncoder.matches(password, member.getPassword())) {
             throw new BusinessException(ErrorCode.INVALID_PASSWORD);
         }
 
         // 토큰 생성
         String accessToken = jwtTokenProvider.createAccessToken(
-                memberAuthInfo.userId(),
-                memberAuthInfo.email(),
-                memberAuthInfo.role().name()
+                member.getUserId(),
+                member.getEmail(),
+                member.getRole().name()
         );
 
-        String refreshToken = jwtTokenProvider.createRefreshToken(memberAuthInfo.userId());
+        String refreshToken = jwtTokenProvider.createRefreshToken(member.getUserId());
 
         // RefreshToken을 Redis에 저장
         long refreshTokenExpirationMinutes = jwtTokenProvider.getRefreshTokenExpiration() / 60000;
         redisUtil.setDataExpire(
-                REFRESH_TOKEN_PREFIX + memberAuthInfo.userId(),
+                REFRESH_TOKEN_PREFIX + member.getUserId(),
                 refreshToken,
                 refreshTokenExpirationMinutes
         );
 
-        // 마지막 로그인 시간 업데이트를 위해 엔티티 조회
-        Member member = memberRepository.findById(memberAuthInfo.userId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+        // 마지막 로그인 시간 업데이트
         member.updateLastLoginAt(LocalDateTime.now());
 
-        log.info("User logged in: {}", memberAuthInfo.email());
 
         return new LoginResponse(
                 accessToken,
                 refreshToken,
-                memberAuthInfo.userId(),
-                memberAuthInfo.email(),
-                memberAuthInfo.nickname(),
-                memberAuthInfo.profileImage()
+                member.getUserId(),
+                member.getEmail(),
+                member.getNickname(),
+                member.getProfileImage()
         );
     }
 
     /**
      * 토큰 재발급 - 필요한 정보만 조회하여 토큰 생성
      */
-    @Transactional
     public RefreshTokenResponse refresh(String refreshToken) {
         // RefreshToken 유효성 검증
         if (!jwtTokenProvider.validateToken(refreshToken)) {
@@ -124,7 +119,6 @@ public class AuthService {
                 refreshTokenExpirationMinutes
         );
 
-        log.info("Token refreshed for user: {}", memberTokenInfo.email());
 
         return new RefreshTokenResponse(newAccessToken, newRefreshToken);
     }
@@ -135,7 +129,6 @@ public class AuthService {
     @Transactional
     public void logout(Long userId) {
         redisUtil.deleteData(REFRESH_TOKEN_PREFIX + userId);
-        log.info("User logged out: {}", userId);
     }
 }
 

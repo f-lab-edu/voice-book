@@ -1,5 +1,6 @@
 package com.sj.voicebook.member.service.impl;
 
+import com.sj.voicebook.global.exception.ImageUploadException;
 import com.sj.voicebook.member.service.ImageService;
 import io.awspring.cloud.s3.S3Template;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +20,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class S3ImageService implements ImageService {
 
+
     private final S3Template s3Template; // Spring Cloud AWS가 제공하는 편리한 업로더
     private final S3Presigner s3Presigner; // 우리가 만든 URL 발급기
+    private static final String BASIC_PROFILE_IMAGE_KEY = "기본 프로필.webp";
 
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucketName;
@@ -38,7 +41,10 @@ public class S3ImageService implements ImageService {
 
             // ★ 중요: DB에는 긴 URL이 아니라 이 'key(파일명)'만 저장합니다.
             return key;
-        } catch (IOException e) {
+        }catch (ImageUploadException e){
+            throw new ImageUploadException("이미지 업로드 실패");
+        }
+        catch (IOException e) {
             throw new RuntimeException("파일 업로드 실패", e);
         }
     }
@@ -62,5 +68,10 @@ public class S3ImageService implements ImageService {
 
         // 최종 URL 반환
         return s3Presigner.presignGetObject(presignRequest).url().toString();
+    }
+
+    @Override
+    public String getBasicProfileImageKey() {
+        return BASIC_PROFILE_IMAGE_KEY;
     }
 }

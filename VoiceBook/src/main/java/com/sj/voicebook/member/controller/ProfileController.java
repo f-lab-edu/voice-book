@@ -22,7 +22,6 @@ public class ProfileController {
     public ResponseEntity<ApiResponse<String>> viewImage(@RequestParam("key") String key) {
         String url = imageService.getImageUrl(key);
         ApiResponse<String> response = ApiResponse.success(url, "프로필 이미지 조회에 성공했습니다.");
-        log.debug(response.toString());
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }
