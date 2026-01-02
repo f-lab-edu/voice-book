@@ -42,7 +42,6 @@ public class JavaEmailService implements EmailService {
         @Override
         public void sendEmail(String toEmail) {
             if(memberRepository.existsByEmail(toEmail)) {
-                log.warn("이미 가입된 이메일로 인증 코드 전송 시도: {}", toEmail);
                 throw new BusinessException(ErrorCode.EMAIL_DUPLICATION);
             }
 
@@ -50,7 +49,6 @@ public class JavaEmailService implements EmailService {
 
             if (redisUtil.getData(redisKey) != null) {
                 redisUtil.deleteData(redisKey);
-                log.info("기존 인증 코드 삭제: {}", toEmail);
             }
 
             String authCode = createCode();
@@ -70,13 +68,10 @@ public class JavaEmailService implements EmailService {
                     helper.setText(buildEmailContent(authCode), true);
 
                     javaMailSender.send(mimeMessage);
-                    log.info("인증 코드 전송 성공: {}", toEmail);
                 } catch (MessagingException e) {
-                    log.error("이메일 전송 실패: {}", toEmail, e);
                     // 필요시 재시도 로직 추가 가능
                 }
             }, emailExecutor).exceptionally(ex -> {
-                log.error("비동기 이메일 전송 예외: {}", toEmail, ex);
                 return null;
             });
         }
@@ -91,19 +86,16 @@ public class JavaEmailService implements EmailService {
 
         // 인증 코드가 없거나 만료됨
         if (codeInRedis == null) {
-            log.warn("인증 코드 만료 또는 미존재: {}", email);
             throw new BusinessException(ErrorCode.EMAIL_CODE_EXPIRED);
         }
 
         // 인증 코드 불일치
         if (!codeInRedis.equals(code)) {
-            log.warn("인증 코드 불일치: {}", email);
             throw new BusinessException(ErrorCode.EMAIL_CODE_MISMATCH);
         }
 
         // 인증 성공 시 Redis에서 삭제
         redisUtil.deleteData(redisKey);
-        log.info("이메일 인증 성공: {}", email);
     }
 
     /**
