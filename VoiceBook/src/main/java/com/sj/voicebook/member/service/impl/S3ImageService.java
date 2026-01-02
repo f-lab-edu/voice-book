@@ -1,5 +1,6 @@
 package com.sj.voicebook.member.service.impl;
 
+import com.sj.voicebook.global.exception.ImageUploadException;
 import com.sj.voicebook.member.service.ImageService;
 import io.awspring.cloud.s3.S3Template;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +41,10 @@ public class S3ImageService implements ImageService {
 
             // ★ 중요: DB에는 긴 URL이 아니라 이 'key(파일명)'만 저장합니다.
             return key;
-        } catch (IOException e) {
+        }catch (ImageUploadException e){
+            throw new ImageUploadException("이미지 업로드 실패");
+        }
+        catch (IOException e) {
             throw new RuntimeException("파일 업로드 실패", e);
         }
     }
