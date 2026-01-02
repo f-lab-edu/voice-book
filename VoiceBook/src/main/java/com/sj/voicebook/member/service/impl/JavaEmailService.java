@@ -106,7 +106,7 @@ public class JavaEmailService implements EmailService {
             redisUtil.deleteData(rateLimitKey);
             return null;
         });
-        }
+    }
 
 
 
