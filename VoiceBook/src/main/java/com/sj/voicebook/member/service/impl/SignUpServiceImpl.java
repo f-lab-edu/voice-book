@@ -33,7 +33,7 @@ public class SignUpServiceImpl implements SignUpService {
         // 닉네임 중복 검사
         nicknameDuplicationValidator.validate(request.nickname());
 
-        String imageUrl = null;
+        String imageUrl;
 
         if (request.profileImage() != null && !request.profileImage().isEmpty()) {
             imageUrl = imageService.upload(request.profileImage());
