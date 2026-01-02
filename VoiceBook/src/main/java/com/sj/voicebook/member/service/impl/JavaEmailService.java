@@ -83,29 +83,29 @@ public class JavaEmailService implements EmailService {
         // 1분 간격 제한 설정
         redisUtil.setDataExpireSeconds(rateLimitKey, "1", RATE_LIMIT_SECONDS);
 
-            // CompletableFuture로 비동기 이메일 전송
-            CompletableFuture.runAsync(() -> {
-                try {
-                    MimeMessage mimeMessage = javaMailSender.createMimeMessage();
-                    MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
+        // CompletableFuture로 비동기 이메일 전송
+        CompletableFuture.runAsync(() -> {
+            try {
+                MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
 
-                    helper.setTo(toEmail);
-                    helper.setFrom(senderEmail);
-                    helper.setSubject("[말로쓴책] 이메일 인증 코드입니다.");
-                    helper.setText(emailTemplateProvider.buildAuthCodeEmail(authCode, EXPIRE_MINUTES), true);
+                helper.setTo(toEmail);
+                helper.setFrom(senderEmail);
+                helper.setSubject("[말로쓴책] 이메일 인증 코드입니다.");
+                helper.setText(emailTemplateProvider.buildAuthCodeEmail(authCode, EXPIRE_MINUTES), true);
 
-                    javaMailSender.send(mimeMessage);
-                } catch (MessagingException e) {
-                    log.error("이메일 전송 실패: {}", toEmail, e);
-                    redisUtil.deleteData(redisKey);
-                    redisUtil.deleteData(rateLimitKey);
-                }
-            }, emailExecutor).exceptionally(ex -> {
-                log.error("비동기 이메일 전송 중 예외 발생: {}", toEmail, ex);
+                javaMailSender.send(mimeMessage);
+            } catch (MessagingException e) {
+                log.error("이메일 전송 실패: {}", toEmail, e);
                 redisUtil.deleteData(redisKey);
                 redisUtil.deleteData(rateLimitKey);
-                return null;
-            });
+            }
+        }, emailExecutor).exceptionally(ex -> {
+            log.error("비동기 이메일 전송 중 예외 발생: {}", toEmail, ex);
+            redisUtil.deleteData(redisKey);
+            redisUtil.deleteData(rateLimitKey);
+            return null;
+        });
         }
 
 
