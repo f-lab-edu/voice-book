@@ -117,13 +117,14 @@ public class JavaEmailService implements EmailService {
         // 시도 횟수 확인
         String attemptKey = EMAIL_ATTEMPT_PREFIX + email;
         String attempts = redisUtil.getData(attemptKey);
+        String redisKey = EMAIL_AUTH_PREFIX + email;
 
         if (attempts != null && Integer.parseInt(attempts) >= MAX_ATTEMPTS) {
+            redisUtil.deleteData(redisKey);
             throw new BusinessException(ErrorCode.EMAIL_VERIFY_BLOCKED);
         }
 
         // Redis에서 인증 코드 조회
-        String redisKey = EMAIL_AUTH_PREFIX + email;
         String codeInRedis = redisUtil.getData(redisKey);
 
         // 인증 코드 만료 여부 확인
@@ -140,6 +141,7 @@ public class JavaEmailService implements EmailService {
         // 인증 성공 시 Redis에서 인증 코드 및 시도 횟수 삭제
         redisUtil.deleteData(redisKey);
         redisUtil.deleteData(attemptKey);
+        redisUtil.deleteData(EMAIL_RATE_LIMIT_PREFIX + email);
 
         redisUtil.setDataExpire(EMAIL_VERIFIED_PREFIX+email, "true", VERIFIED_EXPIRE_MINUTES);
     }
