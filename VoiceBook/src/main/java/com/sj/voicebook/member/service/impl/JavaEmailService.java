@@ -74,7 +74,7 @@ public class JavaEmailService implements EmailService {
         String redisKey = EMAIL_AUTH_PREFIX + toEmail;
 
         // 기존 인증 코드가 있으면 삭제
-            redisUtil.deleteData(redisKey);
+        redisUtil.deleteData(redisKey);
 
         // 인증 코드 생성 및 Redis에 저장
         String authCode = createCode();
