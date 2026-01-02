@@ -22,7 +22,7 @@ public class MemberController {
             @Valid @ModelAttribute SignUpRequest request) {
 
 
-        long userId = signUpService.signUp(request.toCommand());
+        long userId = signUpService.signUp(request);
         ApiResponse<Long> response = ApiResponse.success(userId, "회원가입이 완료되었습니다.");
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);

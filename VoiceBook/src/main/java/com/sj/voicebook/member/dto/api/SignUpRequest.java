@@ -1,6 +1,5 @@
 package com.sj.voicebook.member.dto.api;
 
-import com.sj.voicebook.member.dto.application.SignUpCommand;
 import jakarta.validation.constraints.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,12 +21,5 @@ public record SignUpRequest(
         String nickname,
         MultipartFile profileImage) {
 
-    public SignUpCommand toCommand() {
-        return SignUpCommand.builder()
-                .email(this.email)
-                .password(this.password)
-                .nickname(this.nickname)
-                .profileImage(this.profileImage)
-                .build();
-    }
+
 }
