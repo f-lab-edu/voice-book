@@ -1,8 +1,11 @@
 package com.sj.voicebook.member.service.impl;
 
+import com.sj.voicebook.global.exception.BusinessException;
+import com.sj.voicebook.global.exception.ErrorCode;
 import com.sj.voicebook.member.domain.Member;
 import com.sj.voicebook.member.dto.api.SignUpRequest;
 import com.sj.voicebook.member.repository.MemberRepository;
+import com.sj.voicebook.member.service.EmailService;
 import com.sj.voicebook.member.service.ImageService;
 import com.sj.voicebook.member.service.validator.EmailDuplicationValidator;
 import com.sj.voicebook.member.service.SignUpService;
@@ -24,6 +27,7 @@ public class SignUpServiceImpl implements SignUpService {
     private final NicknameDuplicationValidator nicknameDuplicationValidator;
     private final ImageService imageService;
     private final TransactionTemplate transactionTemplate;
+    private final EmailService emailService;
 
     @Override
     public Long signUp(SignUpRequest request) {
@@ -32,6 +36,13 @@ public class SignUpServiceImpl implements SignUpService {
 
         // 닉네임 중복 검사
         nicknameDuplicationValidator.validate(request.nickname());
+
+        // 이메일 인증 검사
+        if(!emailService.isEmailVerified(request.email())){
+            throw new BusinessException(ErrorCode.EMAIL_NOT_VERIFIED);
+        }
+
+
 
         String profileImageKey = resolveProfileImageKey(request);
 
