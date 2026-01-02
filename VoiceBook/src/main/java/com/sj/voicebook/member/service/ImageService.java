@@ -5,4 +5,5 @@ import org.springframework.web.multipart.MultipartFile;
 public interface ImageService {
     String upload(MultipartFile file);
     String getImageUrl(String imageKey);
+    String getBasicProfileImageKey();
 }

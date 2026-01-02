@@ -19,8 +19,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class S3ImageService implements ImageService {
 
+
     private final S3Template s3Template; // Spring Cloud AWS가 제공하는 편리한 업로더
     private final S3Presigner s3Presigner; // 우리가 만든 URL 발급기
+    private static final String BASIC_PROFILE_IMAGE_KEY = "기본 프로필.webp";
 
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucketName;
@@ -62,5 +64,10 @@ public class S3ImageService implements ImageService {
 
         // 최종 URL 반환
         return s3Presigner.presignGetObject(presignRequest).url().toString();
+    }
+
+    @Override
+    public String getBasicProfileImageKey() {
+        return BASIC_PROFILE_IMAGE_KEY;
     }
 }

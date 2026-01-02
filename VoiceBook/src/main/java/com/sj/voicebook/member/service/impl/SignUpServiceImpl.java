@@ -36,6 +36,8 @@ public class SignUpServiceImpl implements SignUpService {
 
         if (request.profileImage() != null && !request.profileImage().isEmpty()) {
             imageUrl = imageService.upload(request.profileImage());
+        }else {
+            imageUrl = imageService.getBasicProfileImageKey();
         }
 
         Member member = Member.create(
