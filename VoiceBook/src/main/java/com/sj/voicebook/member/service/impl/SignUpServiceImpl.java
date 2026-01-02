@@ -12,10 +12,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 @Slf4j
 public class SignUpServiceImpl implements SignUpService {
     private final MemberRepository memberRepository;
@@ -23,9 +23,9 @@ public class SignUpServiceImpl implements SignUpService {
     private final EmailDuplicationValidator emailDuplicationValidator;
     private final NicknameDuplicationValidator nicknameDuplicationValidator;
     private final ImageService imageService;
+    private final TransactionTemplate transactionTemplate;
 
     @Override
-    @Transactional
     public Long signUp(SignUpRequest request) {
         // 이메일 중복 검사
         emailDuplicationValidator.validate(request.email());
@@ -33,29 +33,36 @@ public class SignUpServiceImpl implements SignUpService {
         // 닉네임 중복 검사
         nicknameDuplicationValidator.validate(request.nickname());
 
-        String imageUrl;
-
-        if (request.profileImage() != null && !request.profileImage().isEmpty()) {
-            imageUrl = imageService.upload(request.profileImage());
-        }else {
-            imageUrl = imageService.getBasicProfileImageKey();
-        }
+        String profileImageKey = resolveProfileImageKey(request);
 
         Member member = Member.create(
                 request.email(),
                 passwordEncoder.encode(request.password()),
                 request.nickname(),
-                imageUrl
+                profileImageKey
         );
-        Member saveMember = memberRepository.save(member);
-        return saveMember.getUserId();
+        return transactionTemplate.execute(
+                status -> memberRepository.save(member).getUserId()
+        );
     }
 
+    private String resolveProfileImageKey(SignUpRequest request) {
+        if (request.profileImage() != null && !request.profileImage().isEmpty()) {
+            return imageService.upload(request.profileImage());
+        } else {
+            return imageService.getBasicProfileImageKey();
+        }
+    }
+
+
+
+    @Transactional(readOnly = true)
     @Override
     public Boolean checkEmailDuplication(String email) {
         return emailDuplicationValidator.checkExists(email);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Boolean checkNicknameDuplication(String nickname) {
         return nicknameDuplicationValidator.checkExists(nickname);
