@@ -28,6 +28,8 @@ public enum ErrorCode {
     EMAIL_CODE_EXPIRED("E002", "인증 코드가 만료되었습니다."),
     EMAIL_CODE_MISMATCH("E003", "인증 코드가 일치하지 않습니다."),
     EMAIL_CODE_NOT_FOUND("E004", "인증 코드를 찾을 수 없습니다."),
+    EMAIL_SEND_TOO_FREQUENT("E005", "이메일 재전송은 60초 후에 가능합니다."),
+    EMAIL_VERIFY_BLOCKED("E006", "인증 시도 횟수를 초과했습니다."),
 
     // File
     INVALID_FILE("F001", "유효하지 않은 파일입니다."),

@@ -19,7 +19,6 @@ import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
-@RequiredArgsConstructor
 @Service
 @Slf4j
 public class JavaEmailService implements EmailService {
@@ -27,34 +26,56 @@ public class JavaEmailService implements EmailService {
     private final RedisUtil redisUtil;
     private final MemberRepository memberRepository;
 
-    @Qualifier("emailExecutor")
     private final Executor emailExecutor;
 
     private static final String EMAIL_AUTH_PREFIX = "email:auth:";
     private static final long EXPIRE_MINUTES = 5;
+    private static final String EMAIL_RATE_LIMIT_PREFIX = "email:rate:";
+    private static final long RATE_LIMIT_SECONDS = 60;
     private static final int CODE_LENGTH = 6;
-    private static final Random RANDOM = new Random();
+    private static final String EMAIL_ATTEMPT_PREFIX = "email:attempt:";
+    private static final int MAX_ATTEMPTS = 5;
 
     @Value("${spring.mail.username}") // application.yml의 username 가져오기
     private String senderEmail;
 
+    public JavaEmailService(JavaMailSender javaMailSender,
+                            RedisUtil redisUtil,
+                            MemberRepository memberRepository,
+                            @Qualifier("emailExecutor")
+    Executor emailExecutor) {
+        this.javaMailSender = javaMailSender;
+        this.redisUtil = redisUtil;
+        this.memberRepository = memberRepository;
+        this.emailExecutor = emailExecutor;
+    }
 
-        @Override
+
+    @Override
         public void sendEmail(String toEmail) {
-            if(memberRepository.existsByEmail(toEmail)) {
-                throw new BusinessException(ErrorCode.EMAIL_DUPLICATION);
-            }
+        if(memberRepository.existsByEmail(toEmail)) {
+            throw new BusinessException(ErrorCode.EMAIL_DUPLICATION);
+        }
 
-            String redisKey = EMAIL_AUTH_PREFIX + toEmail;
+        String rateLimitKey = EMAIL_RATE_LIMIT_PREFIX + toEmail;
 
-            if (redisUtil.getData(redisKey) != null) {
-                redisUtil.deleteData(redisKey);
-            }
+        // 이전 요청이 1분 이내에 있었는지 확인
+        if (redisUtil.getData(rateLimitKey) != null) {
+            throw new BusinessException(ErrorCode.EMAIL_SEND_TOO_FREQUENT);
+        }
 
-            String authCode = createCode();
+        // Redis에 저장할 키 생성
+        String redisKey = EMAIL_AUTH_PREFIX + toEmail;
 
-            // Redis에 먼저 저장
-            redisUtil.setDataExpire(redisKey, authCode, EXPIRE_MINUTES);
+        // 기존 인증 코드가 있으면 삭제
+            redisUtil.deleteData(redisKey);
+
+        // 인증 코드 생성 및 Redis에 저장
+        String authCode = createCode();
+        // 인증 코드와 만료 시간 설정
+        redisUtil.setDataExpire(redisKey, authCode, EXPIRE_MINUTES);
+        // 1분 간격 제한 설정
+        redisUtil.setDataExpireSeconds(rateLimitKey, "1", RATE_LIMIT_SECONDS);
 
             // CompletableFuture로 비동기 이메일 전송
             CompletableFuture.runAsync(() -> {
@@ -69,40 +90,55 @@ public class JavaEmailService implements EmailService {
 
                     javaMailSender.send(mimeMessage);
                 } catch (MessagingException e) {
-                    // 필요시 재시도 로직 추가 가능
+                    log.error("이메일 전송 실패: {}", toEmail, e);
+                    redisUtil.deleteData(redisKey);
                 }
             }, emailExecutor).exceptionally(ex -> {
+                log.error("비동기 이메일 전송 중 예외 발생: {}", toEmail, ex);
                 return null;
             });
         }
 
-        // verifyEmailCode, createCode, buildEmailContent 메서드는 동일
+
+
 
 
     @Override
     public void verifyEmailCode(String email, String code) {
+        // 시도 횟수 확인
+        String attemptKey = EMAIL_ATTEMPT_PREFIX + email;
+        String attempts = redisUtil.getData(attemptKey);
+
+        if (attempts != null && Integer.parseInt(attempts) >= MAX_ATTEMPTS) {
+            throw new BusinessException(ErrorCode.EMAIL_VERIFY_BLOCKED);
+        }
+
+        // Redis에서 인증 코드 조회
         String redisKey = EMAIL_AUTH_PREFIX + email;
         String codeInRedis = redisUtil.getData(redisKey);
 
-        // 인증 코드가 없거나 만료됨
+        // 인증 코드 만료 여부 확인
         if (codeInRedis == null) {
             throw new BusinessException(ErrorCode.EMAIL_CODE_EXPIRED);
         }
 
-        // 인증 코드 불일치
+        // 인증 코드 일치 여부 확인
         if (!codeInRedis.equals(code)) {
+            redisUtil.increment(attemptKey, EXPIRE_MINUTES);
             throw new BusinessException(ErrorCode.EMAIL_CODE_MISMATCH);
         }
 
-        // 인증 성공 시 Redis에서 삭제
+        // 인증 성공 시 Redis에서 인증 코드 및 시도 횟수 삭제
         redisUtil.deleteData(redisKey);
+        redisUtil.deleteData(attemptKey);
     }
 
     /**
      * 6자리 랜덤 숫자 인증 코드 생성
      */
     private String createCode() {
-        return String.format("%0" + CODE_LENGTH + "d", RANDOM.nextInt((int) Math.pow(10, CODE_LENGTH)));
+        Random random = new Random();
+        return String.format("%0" + CODE_LENGTH + "d", random.nextInt((int) Math.pow(10, CODE_LENGTH)));
     }
 
     /**

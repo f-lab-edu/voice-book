@@ -29,4 +29,16 @@ public class RedisUtil {
     public void deleteData(String key) {
         stringRedisTemplate.delete(key);
     }
+
+    public void setDataExpireSeconds(String key, String value, long seconds) {
+        ValueOperations<String, String> ops = stringRedisTemplate.opsForValue();
+        ops.set(key, value, Duration.ofSeconds(seconds));
+    }
+    public void increment(String key, long expireMinutes) {
+        ValueOperations<String, String> ops = stringRedisTemplate.opsForValue();
+        Long count = ops.increment(key);
+        if (count != null && count == 1) {
+            stringRedisTemplate.expire(key, Duration.ofMinutes(expireMinutes));
+        }
+    }
 }
