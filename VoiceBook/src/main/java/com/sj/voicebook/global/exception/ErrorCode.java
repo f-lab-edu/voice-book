@@ -36,6 +36,9 @@ public enum ErrorCode {
     FILE_UPLOAD_FAILED("F004", "파일 업로드에 실패했습니다."),
     FILE_URL_GENERATION_FAILED("F005", "파일 URL 생성에 실패했습니다."),
 
+    // Image
+    IMAGE_UPLOAD_ERROR("I001", "이미지 업로드 중 오류가 발생했습니다."),
+
     //IO
     NOT_OR_NULL_INPUT_REQUIRED("I001", "입력값이 없거나 null일 수 없습니다.");
 

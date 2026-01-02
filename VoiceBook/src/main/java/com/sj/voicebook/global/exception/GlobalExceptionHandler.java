@@ -109,6 +109,19 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 이미지 업로드 중 발생하는 예외
+     */
+    @ExceptionHandler(ImageUploadException.class)
+    protected ResponseEntity<ErrorResponse> handleImageUploadException(ImageUploadException e) {
+        log.error("handleImageUploadException", e);
+        ErrorResponse response = ErrorResponse.of(
+                ErrorCode.IMAGE_UPLOAD_ERROR.getCode(),
+                ErrorCode.IMAGE_UPLOAD_ERROR.getMessage()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    /**
      * 그 외 모든 예외
      */
     @ExceptionHandler(Exception.class)
