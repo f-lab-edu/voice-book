@@ -46,12 +46,11 @@ public class JavaEmailService implements EmailService {
 
     public JavaEmailService(JavaMailSender javaMailSender,
                             RedisUtil redisUtil,
-                            MemberRepository memberRepository, EmailTemplateProvider emailTemplateProvider, EmailDuplicationValidator emailDuplicationValidator,
+                            EmailTemplateProvider emailTemplateProvider, EmailDuplicationValidator emailDuplicationValidator,
                             @Qualifier("emailExecutor")
     Executor emailExecutor) {
         this.javaMailSender = javaMailSender;
         this.redisUtil = redisUtil;
-        this.memberRepository = memberRepository;
         this.emailTemplateProvider = emailTemplateProvider;
         this.emailDuplicationValidator = emailDuplicationValidator;
         this.emailExecutor = emailExecutor;
