@@ -58,15 +58,13 @@ public class JavaEmailService implements EmailService {
 
 
     @Override
-        public void sendEmail(String toEmail) {
+    public void sendEmail(String toEmail) {
+        // 이메일 중복 검사
         emailDuplicationValidator.validate(toEmail);
-
+        // 발송 빈도 제한 검사
+        checkRateLimit(toEmail);
+        // Rate limit 키 생성
         String rateLimitKey = EMAIL_RATE_LIMIT_PREFIX + toEmail;
-
-        // 이전 요청이 1분 이내에 있었는지 확인
-        if (redisUtil.getData(rateLimitKey) != null) {
-            throw new BusinessException(ErrorCode.EMAIL_SEND_TOO_FREQUENT);
-        }
 
         // Redis에 저장할 키 생성
         String redisKey = EMAIL_AUTH_PREFIX + toEmail;
@@ -81,31 +79,48 @@ public class JavaEmailService implements EmailService {
         // 1분 간격 제한 설정
         redisUtil.setDataExpireSeconds(rateLimitKey, "1", RATE_LIMIT_SECONDS);
 
-        // CompletableFuture로 비동기 이메일 전송
+        // 비동기 이메일 전송
+        sendEmailAsync(toEmail, authCode, redisKey, rateLimitKey);
+    }
+
+    private void checkRateLimit(String email) {
+        String rateLimitKey = EMAIL_RATE_LIMIT_PREFIX + email;
+        if (redisUtil.getData(rateLimitKey) != null) {
+            throw new BusinessException(ErrorCode.EMAIL_SEND_TOO_FREQUENT);
+        }
+    }
+
+    private void sendEmailAsync(String toEmail, String authCode, String redisKey, String rateLimitKey) {
         CompletableFuture.runAsync(() -> {
             try {
-                MimeMessage mimeMessage = javaMailSender.createMimeMessage();
-                MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
-
-                helper.setTo(toEmail);
-                helper.setFrom(senderEmail);
-                helper.setSubject("[말로쓴책] 이메일 인증 코드입니다.");
-                helper.setText(emailTemplateProvider.buildAuthCodeEmail(authCode, EXPIRE_MINUTES), true);
-
-                javaMailSender.send(mimeMessage);
+                sendMimeMessage(toEmail, authCode);
             } catch (MessagingException e) {
                 log.error("이메일 전송 실패: {}", toEmail, e);
-                redisUtil.deleteData(redisKey);
-                redisUtil.deleteData(rateLimitKey);
+                cleanupOnFailure(redisKey, rateLimitKey);
             }
         }, emailExecutor).exceptionally(ex -> {
             log.error("비동기 이메일 전송 중 예외 발생: {}", toEmail, ex);
-            redisUtil.deleteData(redisKey);
-            redisUtil.deleteData(rateLimitKey);
+            cleanupOnFailure(redisKey, rateLimitKey);
             return null;
         });
     }
 
+    private void sendMimeMessage(String toEmail, String authCode) throws MessagingException {
+        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
+
+        helper.setTo(toEmail);
+        helper.setFrom(senderEmail);
+        helper.setSubject("[말로쓴책] 이메일 인증 코드입니다.");
+        helper.setText(emailTemplateProvider.buildAuthCodeEmail(authCode, EXPIRE_MINUTES), true);
+
+        javaMailSender.send(mimeMessage);
+    }
+
+    private void cleanupOnFailure(String redisKey, String rateLimitKey) {
+        redisUtil.deleteData(redisKey);
+        redisUtil.deleteData(rateLimitKey);
+    }
 
 
 
