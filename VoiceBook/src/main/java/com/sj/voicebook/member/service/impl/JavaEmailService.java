@@ -3,58 +3,35 @@ package com.sj.voicebook.member.service.impl;
 import com.sj.voicebook.global.RedisPrefix;
 import com.sj.voicebook.global.exception.BusinessException;
 import com.sj.voicebook.global.exception.ErrorCode;
+import com.sj.voicebook.global.util.CustomMailSender;
 import com.sj.voicebook.global.util.RedisUtil;
 import com.sj.voicebook.member.service.EmailService;
-import com.sj.voicebook.member.service.provider.EmailTemplateProvider;
 import com.sj.voicebook.member.service.validator.EmailDuplicationValidator;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
+
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-
 
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class JavaEmailService implements EmailService {
-    private final JavaMailSender javaMailSender;
     private final RedisUtil redisUtil;
-    private final EmailTemplateProvider emailTemplateProvider;
     private final EmailDuplicationValidator emailDuplicationValidator;
+    private final CustomMailSender mailSender;
+
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-    private final Executor emailExecutor;
 
     private static final long EXPIRE_MINUTES = 5;
     private static final long RATE_LIMIT_SECONDS = 60;
     private static final int CODE_LENGTH = 6;
     private static final int MAX_ATTEMPTS = 5;
     private static final long VERIFIED_EXPIRE_MINUTES = 30;
-
-    @Value("${spring.mail.username}") // application.yml의 username 가져오기
-    private String senderEmail;
-
-    @Autowired
-    public JavaEmailService(JavaMailSender javaMailSender,
-                            RedisUtil redisUtil,
-                            EmailTemplateProvider emailTemplateProvider, EmailDuplicationValidator emailDuplicationValidator,
-                            @Qualifier("emailExecutor")
-    Executor emailExecutor) {
-        this.javaMailSender = javaMailSender;
-        this.redisUtil = redisUtil;
-        this.emailTemplateProvider = emailTemplateProvider;
-        this.emailDuplicationValidator = emailDuplicationValidator;
-        this.emailExecutor = emailExecutor;
-    }
 
 
     @Override
@@ -80,7 +57,7 @@ public class JavaEmailService implements EmailService {
         redisUtil.setDataExpireSeconds(rateLimitKey, "1", RATE_LIMIT_SECONDS);
 
         // 비동기 이메일 전송
-        sendEmailAsync(toEmail, authCode, redisKey, rateLimitKey);
+        mailSender.sendEmailValidateAsync(toEmail, authCode, redisKey, rateLimitKey, EXPIRE_MINUTES);
     }
 
     private void checkRateLimit(String email) {
@@ -88,38 +65,6 @@ public class JavaEmailService implements EmailService {
         if (redisUtil.getData(rateLimitKey) != null) {
             throw new BusinessException(ErrorCode.EMAIL_SEND_TOO_FREQUENT);
         }
-    }
-
-    private void sendEmailAsync(String toEmail, String authCode, String redisKey, String rateLimitKey) {
-        CompletableFuture.runAsync(() -> {
-            try {
-                sendMimeMessage(toEmail, authCode);
-            } catch (MessagingException e) {
-                log.error("이메일 전송 실패: {}", toEmail, e);
-                cleanupOnFailure(redisKey, rateLimitKey);
-            }
-        }, emailExecutor).exceptionally(ex -> {
-            log.error("비동기 이메일 전송 중 예외 발생: {}", toEmail, ex);
-            cleanupOnFailure(redisKey, rateLimitKey);
-            return null;
-        });
-    }
-
-    private void sendMimeMessage(String toEmail, String authCode) throws MessagingException {
-        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
-
-        helper.setTo(toEmail);
-        helper.setFrom(senderEmail);
-        helper.setSubject("[말로쓴책] 이메일 인증 코드입니다.");
-        helper.setText(emailTemplateProvider.buildAuthCodeEmail(authCode, EXPIRE_MINUTES), true);
-
-        javaMailSender.send(mimeMessage);
-    }
-
-    private void cleanupOnFailure(String redisKey, String rateLimitKey) {
-        redisUtil.deleteData(redisKey);
-        redisUtil.deleteData(rateLimitKey);
     }
 
 
