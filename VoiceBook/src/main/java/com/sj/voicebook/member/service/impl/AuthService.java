@@ -7,7 +7,6 @@ import com.sj.voicebook.global.util.RedisUtil;
 import com.sj.voicebook.member.domain.Member;
 import com.sj.voicebook.member.dto.api.LoginResponse;
 import com.sj.voicebook.member.dto.api.RefreshTokenResponse;
-import com.sj.voicebook.member.dto.application.MemberAuthInfo;
 import com.sj.voicebook.member.dto.application.MemberTokenInfo;
 import com.sj.voicebook.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
